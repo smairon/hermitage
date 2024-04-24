@@ -1,12 +1,24 @@
+import typing
+import enum
+
 import zodchy
-import zodchy_patterns
 from ..definition import contracts
+
+T = typing.TypeVar('T')
+
+
+class ReferenceContract(typing.Sized, typing.Protocol):
+    def __call__(self, value: enum.Enum) -> T: ...
+
+    def __getitem__(self, key: T) -> enum.Enum: ...
+
+    def get(self, key: T): ...
 
 
 class ClauseInjector:
     def __init__(
         self,
-        reference: zodchy_patterns.Reference,
+        reference: ReferenceContract,
         search_key: str,
         injection_key: str | None = None
     ):
