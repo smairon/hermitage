@@ -3,12 +3,12 @@ import collections.abc
 import inspect
 import typing
 
-from zodchy import codex
+import zodchy
 from ..definition import contracts
 
 
 class QueryParser:
-    def __init__(self, query: codex.Query):
+    def __init__(self, query: zodchy.codex.cqea.Query):
         self._query = query
         self._mappers = None
         self._substitutes = {}
@@ -31,7 +31,7 @@ class QueryParser:
                 continue
             if _search_contract(
                 _evoke_types_chain(field.type),
-                codex.query.ClauseBit
+                zodchy.codex.query.ClauseBit
             ):
                 if not isinstance(value, collections.abc.Sequence):
                     value = (value,)
@@ -41,7 +41,7 @@ class QueryParser:
             else:
                 yield contracts.Clause(
                     field_name,
-                    codex.query.EQ(getattr(self._query, field_name))
+                    zodchy.codex.query.EQ(getattr(self._query, field_name))
                 )
 
     def _apply_mappers(self, clause: contracts.Clause):
@@ -54,7 +54,7 @@ class QueryParser:
 def _evoke_types_chain(annotation):
     _origin = typing.get_origin(annotation)
     if not _origin:
-        return codex.NoValueType if annotation is inspect.Parameter.empty else annotation
+        return zodchy.types.Empty if annotation is inspect.Parameter.empty else annotation
     else:
         args = typing.get_args(annotation)
         chain = [_origin]
