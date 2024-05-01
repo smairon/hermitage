@@ -27,7 +27,7 @@ class QueryParser:
         for field in dataclasses.fields(self._query):
             field_name = self._substitutes.get(field.name, field.name)
             value = getattr(self._query, field.name)
-            if value is None:
+            if value is zodchy.types.Empty:
                 continue
             if _search_contract(
                 _evoke_types_chain(field.type),
