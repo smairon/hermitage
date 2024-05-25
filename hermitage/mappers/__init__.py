@@ -1,3 +1,0 @@
-from .invoice import (
-    ClauseInjector
-)
