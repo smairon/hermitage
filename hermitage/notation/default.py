@@ -153,6 +153,11 @@ class Total(MetaElement):
     pass
 
 
+@dataclasses.dataclass(frozen=True)
+class Upsert(MetaElement):
+    clause: Clause | ClauseExpression
+
+
 class Invoice:
     def __init__(self, *elements: Bucket):
         self._elements = elements

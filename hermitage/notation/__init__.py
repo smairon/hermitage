@@ -5,5 +5,6 @@ from .default import (
     Clause,
     Slice,
     Total,
-    View
+    Upsert,
+    View,
 )
