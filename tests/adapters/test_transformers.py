@@ -7,7 +7,7 @@ from .definitions import GetTasks, TaskState, task_state_reference
 
 def test_replace_range(adapter):
     query = GetTasks(
-        state=zodchy.codex.query.SET(TaskState.new, TaskState.done),
+        state=zodchy.operators.SET(TaskState.new, TaskState.done),
     )
     state_clause = None
     for clause in adapter(
@@ -18,4 +18,4 @@ def test_replace_range(adapter):
             state_clause = clause
             break
     assert state_clause is not None
-    assert state_clause.operation == zodchy.codex.query.SET(1, 3)
+    assert state_clause.operation == zodchy.operators.SET(1, 3)

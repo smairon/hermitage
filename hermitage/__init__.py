@@ -3,7 +3,3 @@ from . import (
     definitions,
     notation
 )
-
-from zodchy import codex
-
-query = codex.query

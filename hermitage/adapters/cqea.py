@@ -64,7 +64,7 @@ class Adapter:
                     field.name,
                     Clause(
                         field.name,
-                        zodchy.codex.query.EQ(getattr(query, field.name)),
+                        zodchy.operators.EQ(getattr(query, field.name)),
                     ),
                     modifiers
                 )

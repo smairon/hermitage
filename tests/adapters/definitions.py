@@ -19,7 +19,7 @@ class GetTasks(zodchy.codex.cqea.Query):
     name: zodchy.codex.query.ClauseBit[str] | None = None
     state: zodchy.codex.query.ClauseBit[TaskState] | None = None
     created_at: zodchy.codex.query.ClauseBit[datetime.datetime] | None = None
-    limit: zodchy.codex.query.Limit | None = None
+    limit: zodchy.operators.Limit | None = None
 
 
 class DWM:

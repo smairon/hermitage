@@ -24,8 +24,8 @@ class Replace(TransformerContract):
     def __call__(self, clause: Clause):
         operation = clause.operation
         if self._replace_entity is not None:
-            if isinstance(operation, zodchy.codex.query.SET):
-                operation = zodchy.codex.query.SET(
+            if isinstance(operation, zodchy.operators.SET):
+                operation = zodchy.operators.SET(
                     *[self._apply_value(v) for v in operation.value]
                 )
             else:
