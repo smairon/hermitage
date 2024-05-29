@@ -144,7 +144,8 @@ class Bucket(InvoiceElement):
         return self
 
     def label(self, value: str):
-        self._label = value
+        if self._name != value:
+            self._label = value
         return self
 
 
