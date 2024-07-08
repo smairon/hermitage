@@ -2,6 +2,7 @@ import typing
 import collections.abc
 import dataclasses
 import inspect
+from collections import deque
 
 import zodchy
 
@@ -38,36 +39,41 @@ class Adapter:
         modifiers: collections.abc.Mapping[str, list[ModifierContract]]
     ):
         for field in dataclasses.fields(query):
-            value = getattr(query, field.name)
-            if self._is_declined(field.name, value, modifiers):
-                continue
-            if value is zodchy.types.Empty:
-                continue
-            if _search_contract(
-                _evoke_types_chain(field.type),
-                zodchy.codex.query.ClauseBit
-            ):
-                if not isinstance(value, collections.abc.Sequence):
-                    value = (value,)
-                for v in value:
-                    if isinstance(v, zodchy.codex.query.SliceBit):
-                        result = Slice(v)
-                    else:
-                        result = Clause(field.name, v)
+            values = deque((getattr(query, field.name),))
+            while values:
+                value = values.pop()
+                if self._is_declined(field.name, value, modifiers):
+                    continue
+                if value is zodchy.types.Empty:
+                    continue
+                if type(value) is zodchy.codex.query.ClauseBit:
+                    values.extend(value.value)
+                    continue
+                if _search_contract(
+                    _evoke_types_chain(field.type),
+                    zodchy.codex.query.ClauseBit
+                ):
+                    if not isinstance(value, collections.abc.Sequence):
+                        value = (value,)
+                    for v in value:
+                        if isinstance(v, zodchy.codex.query.SliceBit):
+                            result = Slice(v)
+                        else:
+                            result = Clause(field.name, v)
+                        yield self._apply_transformers(
+                            field.name,
+                            result,
+                            modifiers
+                        )
+                else:
                     yield self._apply_transformers(
                         field.name,
-                        result,
+                        Clause(
+                            field.name,
+                            zodchy.operators.EQ(getattr(query, field.name)),
+                        ),
                         modifiers
                     )
-            else:
-                yield self._apply_transformers(
-                    field.name,
-                    Clause(
-                        field.name,
-                        zodchy.operators.EQ(getattr(query, field.name)),
-                    ),
-                    modifiers
-                )
 
     @staticmethod
     def _is_declined(

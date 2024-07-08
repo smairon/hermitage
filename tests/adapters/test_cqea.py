@@ -15,8 +15,8 @@ def test_query(adapter):
         created_at=zodchy.operators.RANGE(
             zodchy.operators.GE(datetime.datetime(2022, 1, 1)),
             zodchy.operators.LE(datetime.datetime(2022, 11, 2))
-        ),
+        ) + zodchy.operators.DESC(),
         limit=zodchy.operators.Limit(10),
     )
     g = adapter(query)
-    assert len(list(g)) == 5
+    assert len(list(g)) == 6
