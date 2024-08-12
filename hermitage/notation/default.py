@@ -31,7 +31,10 @@ class Item(DataElement):
     def __call__(self) -> str | collections.abc.Mapping:
         return self._content
 
-    def __eq__(self, other: typing.Self):
+    def __eq__(self, other: collections.abc.Callable):  # type: ignore[override]
+        if not isinstance(other, Item):
+            return NotImplemented
+
         return self() == other()
 
 
@@ -45,16 +48,18 @@ class Clause(DataElement):
         if isinstance(other, type(self)):
             return ClauseExpression(_self) & other
         else:
-            return other & _self
+            return other & _self  # type: ignore[operator]
 
     def __or__(self, other: typing.Self | 'ClauseExpression'):
         _self = Clause(name=self.name, operation=self.operation)
         if isinstance(other, type(self)):
             return ClauseExpression(_self) | other
         else:
-            return other | _self
+            return other | _self  # type: ignore[operator]
 
-    def __eq__(self, other: typing.Self):
+    def __eq__(self, other: object):
+        if not isinstance(other, Clause):
+            raise NotImplemented
         return self.name == other.name
 
 
@@ -64,7 +69,7 @@ class Slice(DataElement):
 
 
 class ClauseExpression(DataElement):
-    def __init__(self, *elements: typing.Union[Clause, AND, OR]):
+    def __init__(self, *elements: typing.Union[Clause, collections.abc.Callable]):
         self._stack = list(elements) if elements else []
 
     def __and__(self, other: typing.Self | Clause) -> typing.Self:
@@ -79,7 +84,7 @@ class ClauseExpression(DataElement):
     def __getitem__(self, item: int):
         return self._stack[item]
 
-    def _merge(self, other: typing.Self | Clause, operation: typing.Union[AND, OR]):
+    def _merge(self, other: typing.Self | Clause, operation: collections.abc.Callable):
         if isinstance(other, Clause):
             return ClauseExpression(*self, other, operation)
         elif isinstance(other, ClauseExpression):
@@ -94,8 +99,8 @@ class Bucket(InvoiceElement):
     ):
         self._name = name
         self._elements = list(elements)
-        self._qua = None
-        self._label = None
+        self._qua = ''
+        self._label = ''
         self._address = None
 
     @property
@@ -110,8 +115,8 @@ class Bucket(InvoiceElement):
     def qualified_name(self) -> str:
         parts = [
             self._name,
-            self._qua or '',
-            self._label or ''
+            self._qua,
+            self._label
         ]
         return ":".join(parts)
 
@@ -124,10 +129,10 @@ class Bucket(InvoiceElement):
         return self._name
 
     def get_qua(self) -> str | None:
-        return self._qua
+        return self._qua or None
 
     def get_label(self) -> str | None:
-        return self._label
+        return self._label or None
 
     def __iter__(self) -> collections.abc.Iterable[InvoiceElement | ClauseExpression | typing.Self]:
         yield from self._elements
@@ -139,11 +144,11 @@ class Bucket(InvoiceElement):
         self._elements.append(other)
         return self
 
-    def qua(self, value: str):
+    def qua(self, value: str) -> typing.Self:
         self._qua = value
         return self
 
-    def label(self, value: str):
+    def label(self, value: str) -> typing.Self:
         if self._name != value:
             self._label = value
         return self
@@ -184,5 +189,5 @@ class View:
         return self._data
 
     @property
-    def meta(self) -> ViewMeta:
+    def meta(self) -> ViewMeta | None:
         return self._meta

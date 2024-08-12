@@ -8,6 +8,7 @@ import zodchy
 
 from ..notation.default import (
     InvoiceElement,
+    DataElement,
     Item,
     Slice,
     Clause
@@ -24,7 +25,7 @@ class Adapter:
         self,
         message: zodchy.codex.cqea.Query | zodchy.codex.cqea.WriteEvent,
         *modifiers: ModifierContract
-    ) -> collections.abc.Generator[InvoiceElement, None, None]:
+    ) -> collections.abc.Iterator[InvoiceElement]:
         indexed = collections.defaultdict(list)
         for modifier in modifiers:
             indexed[modifier.field_name].append(modifier)
@@ -32,6 +33,8 @@ class Adapter:
             return self._parse_query(message, indexed)
         elif isinstance(message, zodchy.codex.cqea.WriteEvent):
             return self._parse_write_event(message, indexed)
+        else:
+            raise NotImplementedError("Unsupported message type")
 
     def _parse_query(
         self,
@@ -57,14 +60,17 @@ class Adapter:
                         value = (value,)
                     for v in value:
                         if isinstance(v, zodchy.codex.query.SliceBit):
-                            result = Slice(v)
+                            yield self._apply_transformers(
+                                field.name,
+                                Slice(v),
+                                modifiers
+                            )
                         else:
-                            result = Clause(field.name, v)
-                        yield self._apply_transformers(
-                            field.name,
-                            result,
-                            modifiers
-                        )
+                            yield self._apply_transformers(
+                                field.name,
+                                Clause(field.name, v),
+                                modifiers
+                            )
                 else:
                     yield self._apply_transformers(
                         field.name,
@@ -89,7 +95,7 @@ class Adapter:
     @staticmethod
     def _apply_transformers(
         field_name: str,
-        clause: Clause,
+        clause: DataElement,
         modifiers: collections.abc.Mapping[str, list[ModifierContract]]
     ):
         for transformer in filter(
@@ -137,7 +143,7 @@ def _search_contract(
 ) -> type | None:
     haystack = haystack if isinstance(haystack, collections.abc.Sequence) else (haystack,)
     if collections.abc.Callable in haystack:
-        return
+        return None
     for element in haystack:
         if isinstance(element, collections.abc.Sequence):
             if result := _search_contract(element, *needles):
@@ -149,3 +155,4 @@ def _search_contract(
                 for needle in needles
             ):
                 return element
+    return None
